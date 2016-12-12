@@ -16,7 +16,7 @@ export class OrganizationsPage {
   constructor(public navCtrl: NavController) {}
 
   ionViewDidLoad() {
-    console.log('Hello OrganizationsPage Page');
+    console.log('Hello Organizations Page');
   }
 
 }
