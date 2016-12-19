@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController } from 'ionic-angular';
+import { LoadingController, NavController, Refresher } from 'ionic-angular';
 
 import { User } from '../../models/user';
 import { GithubUsers } from '../../providers/github-users';
@@ -18,23 +18,50 @@ import { UserDetailsPage } from '../user-details/user-details';
 export class UsersPage {
   users: User[];
   originalUsers: User[];
+  lastLoadedId: number;
 
-  constructor(public navCtrl: NavController, private githubUsers: GithubUsers) {
-    githubUsers.load().subscribe(users => {
-      this.users = users;
-      this.originalUsers = users;
+  constructor(public navCtrl: NavController, 
+              public loadingCtrl: LoadingController,
+              private githubUsers: GithubUsers) {
+
+    this.fetchContent();
+  }
+
+  fetchContent(): void {
+    let loading = this.loadingCtrl.create({
+      content: 'Loading users...'
     });
 
-//    githubUsers.searchUsers('scotch').subscribe(users => {
-//      console.log(users)
-//    })
+    loading.present();
+
+    this.githubUsers.load().subscribe(users => {
+      this.users = users;
+      this.originalUsers = users;
+
+      this.lastLoadedId = this.users[this.users.length-1].id;
+
+      loading.dismiss();
+    });
+  }
+
+  doInfinite(infiniteScroll) {
+    let paramsUrl = this.lastLoadedId.toString();
+
+    this.githubUsers.load().subscribe(users => {
+      this.users = users;
+      this.originalUsers = users;
+
+      this.lastLoadedId = this.users[this.users.length-1].id;
+
+      infiniteScroll.complete();
+    });
   }
 
   goToDetails(login: string): void {
-    this.navCtrl.push(UserDetailsPage, {login});
+    this.navCtrl.push(UserDetailsPage, { login });
   }
 
- search(searchEvent): void {
+  search(searchEvent): void {
     let term = searchEvent.target.value
     // We will only perform the search if we have 3 or more characters
     if (term.trim() === '' || term.trim().length < 3) {
@@ -46,5 +73,5 @@ export class UsersPage {
         this.users = users
       });
     }
-  }  
+  }
 }
